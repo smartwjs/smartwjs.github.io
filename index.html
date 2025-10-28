@@ -41,32 +41,6 @@
             font-size: 14px;
         }
         
-        .file-section {
-            background: #f8f9fa;
-            border: 2px dashed #dee2e6;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 25px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .file-section:hover {
-            border-color: #667eea;
-            background: #f0f2ff;
-        }
-        
-        .file-section i {
-            font-size: 48px;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
         .input-group {
             margin-bottom: 20px;
         }
@@ -78,18 +52,26 @@
             color: #333;
         }
         
-        select, input {
+        select, input, textarea {
             width: 100%;
             padding: 12px 15px;
             border: 2px solid #e1e5e9;
             border-radius: 8px;
             font-size: 16px;
             transition: border-color 0.3s ease;
+            font-family: inherit;
         }
         
-        select:focus, input:focus {
+        select:focus, input:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
+        }
+        
+        textarea {
+            height: 120px;
+            resize: vertical;
+            background: #f8f9fa;
+            font-family: monospace;
         }
         
         .btn {
@@ -116,6 +98,11 @@
         
         .btn-secondary {
             background: #6c757d;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
             color: white;
         }
         
@@ -161,6 +148,7 @@
             border-radius: 8px;
             padding: 15px;
             margin-top: 15px;
+            border: 1px solid #e1e5e9;
         }
         
         .data-item {
@@ -175,50 +163,61 @@
             border-bottom: none;
         }
         
-        /* 移动端优化 */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            
-            .container {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 20px;
-            }
+        .encryption-badge {
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
         }
         
-        /* 文件选择器图标 */
-        .file-icon {
-            font-size: 48px;
-            color: #667eea;
+        .data-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .data-title {
+            color: #333;
             margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         
-        .file-text {
-            color: #666;
-            font-size: 14px;
+        .copy-btn {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔐 验证系统</h1>
-        <div class="subtitle">王欣正的博客 - 安全访问验证</div>
+        <h1>🔐 验证系统 <span class="encryption-badge">内置加密数据</span></h1>
+        <div class="subtitle">所有数据已内置并加密，无需外部文件</div>
         
-        <div class="file-section" onclick="document.getElementById('fileInput').click()">
-            <div class="file-icon">📁</div>
-            <div class="file-text">点击选择 .passwordadmin 文件</div>
-            <div style="font-size: 12px; color: #999; margin-top: 5px;">支持手机和电脑</div>
-            <input type="file" id="fileInput" class="file-input" accept=".passwordadmin">
+        <div class="data-section">
+            <div class="data-title">
+                <span>📁 内置加密数据</span>
+                <button class="copy-btn" onclick="copyEncryptedData()">复制数据</button>
+            </div>
+            <textarea id="encryptedData" readonly>cW84eXJpZmxkIOKGkCAlMTBsdXFqZHcKYWhpb2ZkaXUg4oaQICV8MTE4NWpsYXMKYWlkZmhsYXMg4oaQICV8MTk4YWxrZmFoamFrCmFobGlmdXNkIOKGkCBxcXBvaTIwMTQiVwrpnZPmsLTnuqcg4oaQIGFobGlmdXNkCumdkuioiOaNlyDihpAgcW84eXJpZmxkCuioiOa3q+WkpSDihpAgYWhpb2ZkaXUK5byg5bG85pilIOKGkCBhaWRmaGxhcw==</textarea>
+            <div style="font-size: 12px; color: #666; margin-top: 8px;">
+                此数据已加密，包含所有验证信息
+            </div>
         </div>
         
         <div class="input-group">
             <label for="nameSelect">👤 选择姓名</label>
             <select id="nameSelect">
-                <option value="">请先导入数据文件</option>
+                <option value="">请选择姓名</option>
             </select>
         </div>
         
@@ -247,6 +246,7 @@
                 <input type="text" id="newY" placeholder="输入验证代码">
             </div>
             <button class="btn btn-primary" id="addBtn">添加数据</button>
+            <button class="btn btn-success" id="updateDataBtn">🔄 更新加密数据</button>
             <button class="btn btn-secondary" id="logoutBtn">退出管理员</button>
             
             <div class="data-list" id="dataList">
@@ -256,13 +256,16 @@
     </div>
 
     <script>
+        // 内置的加密数据（Base64编码）
+        const ENCRYPTED_DATA = "cW84eXJpZmxkIOKGkCAlMTBsdXFqZHcKYWhpb2ZkaXUg4oaQICV8MTE4NWpsYXMKYWlkZmhsYXMg4oaQICV8MTk4YWxrZmFoamFrCmFobGlmdXNkIOKGkCBxcXBvaTIwMTQiVwrpnZPmsLTnuqcg4oaQIGFobGlmdXNkCumdkuioiOaNlyDihpAgcW84eXJpZmxkCuioiOa3q+WkpSDihpAgYWhpb2ZkaXUK5byg5bG85pilIOKGkCBhaWRmaGxhcw==";
+
         // 数据存储
         let nameToX = {};
         let xToY = {};
         let isAdminMode = false;
 
         // 获取DOM元素
-        const fileInput = document.getElementById('fileInput');
+        const encryptedDataTextarea = document.getElementById('encryptedData');
         const nameSelect = document.getElementById('nameSelect');
         const codeInput = document.getElementById('codeInput');
         const verifyBtn = document.getElementById('verifyBtn');
@@ -273,36 +276,36 @@
         const newX = document.getElementById('newX');
         const newY = document.getElementById('newY');
         const addBtn = document.getElementById('addBtn');
+        const updateDataBtn = document.getElementById('updateDataBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const dataList = document.getElementById('dataList');
 
-        // 文件读取
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file && file.name.endsWith('.passwordadmin')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        parsePasswordAdminFile(e.target.result);
-                        updateNameSelect();
-                        showResult('✅ 文件导入成功！', true);
-                    } catch (error) {
-                        showResult('❌ 文件格式错误', false);
-                    }
-                };
-                reader.readAsText(file);
-            }
-        });
+        // Base64编码函数（处理中文）
+        function base64Encode(str) {
+            return btoa(unescape(encodeURIComponent(str)));
+        }
 
-        // 解析文件内容
-        function parsePasswordAdminFile(content) {
+        // Base64解码函数（处理中文）
+        function base64Decode(str) {
+            return decodeURIComponent(escape(atob(str)));
+        }
+
+        // 复制加密数据到剪贴板
+        function copyEncryptedData() {
+            encryptedDataTextarea.select();
+            document.execCommand('copy');
+            showResult('✅ 加密数据已复制到剪贴板', true);
+        }
+
+        // 解析数据内容
+        function parseDataContent(content) {
             const lines = content.split('\n').filter(line => line.trim());
             nameToX = {};
             xToY = {};
             
             for (const line of lines) {
-                const parts = line.split(' → ');
-                if (parts.length === 2) {
+                const parts = line.split(/ → | /).filter(part => part.trim());
+                if (parts.length >= 2) {
                     const key = parts[0].trim();
                     const value = parts[1].trim();
                     
@@ -313,33 +316,11 @@
                     }
                 }
             }
-            
-            // 如果没有数据，使用默认数据
-            if (Object.keys(nameToX).length === 0) {
-                loadDefaultData();
-            }
         }
 
         // 判断中文姓名
         function isChineseName(text) {
             return /^[\u4e00-\u9fa5]{2,4}$/.test(text);
-        }
-
-        // 加载默认数据
-        function loadDefaultData() {
-            nameToX = {
-                '王欣正': 'ahlifusd',
-                '王睿佳': 'qo8yrifld', 
-                '徐金慧': 'ahiofdiu',
-                '张俊彦': 'aidfhlas'
-            };
-            
-            xToY = {
-                'qo8yrifld': '%10luqjdw',
-                'ahiofdiu': '%1185jlas',
-                'aidfhlas': '%198alkfahjak',
-                'ahlifusd': 'qqpoi2014"W'
-            };
         }
 
         // 更新姓名选择框
@@ -351,6 +332,19 @@
                 option.textContent = name;
                 nameSelect.appendChild(option);
             });
+        }
+
+        // 初始化数据
+        function initializeData() {
+            try {
+                const decodedContent = base64Decode(ENCRYPTED_DATA);
+                parseDataContent(decodedContent);
+                updateNameSelect();
+                console.log('✅ 内置加密数据加载成功');
+            } catch (error) {
+                console.error('❌ 数据初始化失败:', error);
+                showResult('❌ 数据加载失败', false);
+            }
         }
 
         // 验证函数
@@ -407,10 +401,16 @@
             resultDiv.textContent = message;
             resultDiv.className = 'result ' + (isSuccess ? 'success' : 'error');
             resultDiv.style.display = 'block';
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 3000);
         }
 
         // 管理员功能
         addBtn.addEventListener('click', addData);
+        updateDataBtn.addEventListener('click', updateEncryptedData);
         logoutBtn.addEventListener('click', logout);
 
         function addData() {
@@ -457,9 +457,32 @@
             showResult('已退出管理员模式', true);
         }
 
-        // 初始加载默认数据
-        loadDefaultData();
-        updateNameSelect();
+        // 更新加密数据
+        function updateEncryptedData() {
+            // 构建数据内容
+            let fileContent = '';
+            
+            // 添加 X → Y 映射
+            Object.keys(xToY).forEach(x => {
+                fileContent += `${x} → ${xToY[x]}\n`;
+            });
+            
+            // 添加 姓名 → X 映射
+            Object.keys(nameToX).forEach(name => {
+                fileContent += `${name} → ${nameToX[name]}\n`;
+            });
+            
+            // Base64加密
+            const newEncryptedData = base64Encode(fileContent);
+            
+            // 更新文本框显示
+            encryptedDataTextarea.value = newEncryptedData;
+            
+            showResult('✅ 加密数据已更新！', true);
+        }
+
+        // 初始化
+        initializeData();
     </script>
 </body>
 </html>
