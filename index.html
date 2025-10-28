@@ -208,7 +208,7 @@
                 <span>📁 内置加密数据</span>
                 <button class="copy-btn" onclick="copyEncryptedData()">复制数据</button>
             </div>
-            <textarea id="encryptedData" readonly>cW84eXJpZmxkIOKGkCAlMTBsdXFqZHcKYWhpb2ZkaXUg4oaQICV8MTE4NWpsYXMKYWlkZmhsYXMg4oaQICV8MTk4YWxrZmFoamFrCmFobGlmdXNkIOKGkCBxcXBvaTIwMTQiVwrpnZPmsLTnuqcg4oaQIGFobGlmdXNkCumdkuioiOaNlyDihpAgcW84eXJpZmxkCuioiOa3q+WkpSDihpAgYWhpb2ZkaXUK5byg5bG85pilIOKGkCBhaWRmaGxhcw==</textarea>
+            <textarea id="encryptedData" readonly>cW84eXJpZmxkICUxMGx1cWpkdwphaGlvZmRpdSAlMTE4NWpsYXMKYWlkZmhsYXMgJTE5OGFsa2ZhaGphawphbGlmdXNkIHFxcG9pMjAxNCJXCumdk+awtOe6pyBhaGxpZnVzZArpnZLoqIjmjZcgcW84eXJpZmxkCuioiOa3q+WkpSBhaGlvZmRpdQrlvKDlsbzmqKUgYWlkZmhsYXM=</textarea>
             <div style="font-size: 12px; color: #666; margin-top: 8px;">
                 此数据已加密，包含所有验证信息
             </div>
@@ -256,8 +256,8 @@
     </div>
 
     <script>
-        // 内置的加密数据（Base64编码）
-        const ENCRYPTED_DATA = "cW84eXJpZmxkIOKGkCAlMTBsdXFqZHcKYWhpb2ZkaXUg4oaQICV8MTE4NWpsYXMKYWlkZmhsYXMg4oaQICV8MTk4YWxrZmFoamFrCmFobGlmdXNkIOKGkCBxcXBvaTIwMTQiVwrpnZPmsLTnuqcg4oaQIGFobGlmdXNkCumdkuioiOaNlyDihpAgcW84eXJpZmxkCuioiOa3q+WkpSDihpAgYWhpb2ZkaXUK5byg5bG85pilIOKGkCBhaWRmaGxhcw==";
+        // 内置的加密数据（Base64编码）- 修正版
+        const ENCRYPTED_DATA = "cW84eXJpZmxkICUxMGx1cWpkdwphaGlvZmRpdSAlMTE4NWpsYXMKYWlkZmhsYXMgJTE5OGFsa2ZhaGphawphbGlmdXNkIHFxcG9pMjAxNCJXCumdk+awtOe6pyBhaGxpZnVzZArpnZLoqIjmjZcgcW84eXJpZmxkCuioiOa3q+WkpSBhaGlvZmRpdQrlvKDlsbzmqKUgYWlkZmhsYXM=";
 
         // 数据存储
         let nameToX = {};
@@ -304,7 +304,7 @@
             xToY = {};
             
             for (const line of lines) {
-                const parts = line.split(/ → | /).filter(part => part.trim());
+                const parts = line.split(' ').filter(part => part.trim());
                 if (parts.length >= 2) {
                     const key = parts[0].trim();
                     const value = parts[1].trim();
@@ -464,12 +464,12 @@
             
             // 添加 X → Y 映射
             Object.keys(xToY).forEach(x => {
-                fileContent += `${x} → ${xToY[x]}\n`;
+                fileContent += `${x} ${xToY[x]}\n`;
             });
             
             // 添加 姓名 → X 映射
             Object.keys(nameToX).forEach(name => {
-                fileContent += `${name} → ${nameToX[name]}\n`;
+                fileContent += `${name} ${nameToX[name]}\n`;
             });
             
             // Base64加密
