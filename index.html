@@ -218,11 +218,11 @@
             font-size: 12px;
         }
         
-        .copy-notice {
+        .auto-save-notice {
             position: absolute;
             top: -10px;
             right: -10px;
-            background: #ff6b6b;
+            background: #28a745;
             color: white;
             padding: 5px 10px;
             border-radius: 15px;
@@ -256,17 +256,24 @@
             50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
+        
+        .edit-hint {
+            font-size: 12px;
+            color: #666;
+            margin-top: 8px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔐 验证系统 <span class="encryption-badge">凯撒加密</span></h1>
-        <div class="subtitle">使用凯撒密码（右移1位）加密验证代码</div>
+        <h1>🔐 验证系统 <span class="encryption-badge">实时编辑</span></h1>
+        <div class="subtitle">直接在数据框中编辑，实时生效</div>
         
         <div class="data-section">
-            <div class="copy-notice" id="copyNotice">请复制</div>
+            <div class="auto-save-notice" id="autoSaveNotice">已更新</div>
             <div class="data-title">
-                <span>📁 加密数据（名字==加密的code）</span>
+                <span>📁 实时编辑数据（名字==加密的code）</span>
                 <button class="copy-btn" onclick="copyEncryptedData()">复制数据</button>
             </div>
             <textarea id="encryptedData">王欣正==bimjgvte
@@ -277,8 +284,8 @@ bimjgvte==rrqpj3125#X
 rp9zsjgme==&21mvrkex
 bijopegjv==&2296kmbt
 bjeigimbt==&2:9bmlgbikbl</textarea>
-            <div style="font-size: 12px; color: #666; margin-top: 8px;">
-                格式：名字==（凯撒加密的code），右移1位ASCII | <strong>可编辑</strong>
+            <div class="edit-hint">
+                💡 直接在此编辑数据，3秒后自动生效 | 格式：名字==（凯撒加密的code）
             </div>
         </div>
         
@@ -345,7 +352,7 @@ bjeigimbt==&2:9bmlgbikbl</textarea>
             </div>
             
             <div class="button-group">
-                <button class="btn btn-success btn-half" id="updateDataBtn">🔄 更新数据</button>
+                <button class="btn btn-success btn-half" id="refreshDataBtn">🔄 刷新数据</button>
                 <button class="btn btn-secondary btn-half" id="logoutBtn">退出管理员</button>
             </div>
             
@@ -370,10 +377,11 @@ bjeigimbt==&2:9bmlgbikbl`;
         let nameToEncryptedCode = {};
         let encryptedCodeToEncryptedPassword = {};
         let isAdminMode = false;
+        let autoSaveTimer = null;
 
         // 获取DOM元素
         const encryptedDataTextarea = document.getElementById('encryptedData');
-        const copyNotice = document.getElementById('copyNotice');
+        const autoSaveNotice = document.getElementById('autoSaveNotice');
         const nameSelect = document.getElementById('nameSelect');
         const codeInput = document.getElementById('codeInput');
         const verifyBtn = document.getElementById('verifyBtn');
@@ -389,7 +397,7 @@ bjeigimbt==&2:9bmlgbikbl`;
         const addBtn = document.getElementById('addBtn');
         const addPasswordBtn = document.getElementById('addPasswordBtn');
         const batchAddBtn = document.getElementById('batchAddBtn');
-        const updateDataBtn = document.getElementById('updateDataBtn');
+        const refreshDataBtn = document.getElementById('refreshDataBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const dataList = document.getElementById('dataList');
 
@@ -420,13 +428,44 @@ bjeigimbt==&2:9bmlgbikbl`;
             showResult('✅ 加密数据已复制到剪贴板', true);
         }
 
-        // 文本框内容改变时显示复制提示
-        encryptedDataTextarea.addEventListener('input', function() {
-            copyNotice.style.display = 'block';
-            setTimeout(() => {
-                copyNotice.style.display = 'none';
-            }, 5000);
-        });
+        // 实时保存数据
+        function setupAutoSave() {
+            encryptedDataTextarea.addEventListener('input', function() {
+                // 清除之前的计时器
+                if (autoSaveTimer) {
+                    clearTimeout(autoSaveTimer);
+                }
+                
+                // 显示保存提示
+                autoSaveNotice.textContent = '保存中...';
+                autoSaveNotice.style.display = 'block';
+                
+                // 3秒后自动保存
+                autoSaveTimer = setTimeout(() => {
+                    saveDataFromTextarea();
+                    autoSaveNotice.textContent = '已更新';
+                    
+                    // 2秒后隐藏提示
+                    setTimeout(() => {
+                        autoSaveNotice.style.display = 'none';
+                    }, 2000);
+                }, 3000);
+            });
+        }
+
+        // 从文本框保存数据
+        function saveDataFromTextarea() {
+            try {
+                const content = encryptedDataTextarea.value;
+                parseDataContent(content);
+                updateNameSelect();
+                updateDataList();
+                console.log('✅ 数据已实时更新');
+            } catch (error) {
+                console.error('❌ 数据保存失败:', error);
+                showResult('❌ 数据格式错误，请检查', false);
+            }
+        }
 
         // 解析数据内容
         function parseDataContent(content) {
@@ -560,7 +599,7 @@ bjeigimbt==&2:9bmlgbikbl`;
         addBtn.addEventListener('click', addCompleteData);
         addPasswordBtn.addEventListener('click', addPasswordOnly);
         batchAddBtn.addEventListener('click', addBatchCompleteData);
-        updateDataBtn.addEventListener('click', updateEncryptedData);
+        refreshDataBtn.addEventListener('click', refreshData);
         logoutBtn.addEventListener('click', logout);
 
         // 添加完整数据（姓名 + 群管理代码 + 真实密码）
@@ -583,7 +622,7 @@ bjeigimbt==&2:9bmlgbikbl`;
             
             updateNameSelect();
             updateDataList();
-            updateEncryptedData();
+            updateEncryptedDataTextarea();
             
             newName.value = '';
             newCode.value = '';
@@ -622,7 +661,7 @@ bjeigimbt==&2:9bmlgbikbl`;
             encryptedCodeToEncryptedPassword[encryptedCode] = encryptedPassword;
             
             updateDataList();
-            updateEncryptedData();
+            updateEncryptedDataTextarea();
             
             existingCode.value = '';
             existingPassword.value = '';
@@ -666,12 +705,44 @@ bjeigimbt==&2:9bmlgbikbl`;
             if (successCount === 3) {
                 updateNameSelect();
                 updateDataList();
-                updateEncryptedData();
+                updateEncryptedDataTextarea();
                 batchInput.value = '';
                 showResult(`✅ 成功添加 ${successCount} 个完整数据！`, true);
             } else {
                 showResult(`❌ 只成功添加 ${successCount}/3 个数据，请检查格式`, false);
             }
+        }
+
+        // 更新数据框内容
+        function updateEncryptedDataTextarea() {
+            // 构建数据内容
+            let fileContent = '';
+            
+            // 添加 姓名 → 加密code
+            Object.keys(nameToEncryptedCode).forEach(name => {
+                fileContent += `${name}==${nameToEncryptedCode[name]}\n`;
+            });
+            
+            // 添加 加密code → 加密密码
+            Object.keys(encryptedCodeToEncryptedPassword).forEach(encryptedCode => {
+                fileContent += `${encryptedCode}==${encryptedCodeToEncryptedPassword[encryptedCode]}\n`;
+            });
+            
+            // 更新文本框显示
+            encryptedDataTextarea.value = fileContent;
+            
+            // 显示保存提示
+            autoSaveNotice.textContent = '已更新';
+            autoSaveNotice.style.display = 'block';
+            setTimeout(() => {
+                autoSaveNotice.style.display = 'none';
+            }, 2000);
+        }
+
+        // 刷新数据
+        function refreshData() {
+            saveDataFromTextarea();
+            showInfo('🔄 数据已刷新！');
         }
 
         function updateDataList() {
@@ -698,36 +769,10 @@ bjeigimbt==&2:9bmlgbikbl`;
             showResult('已退出管理员模式', true);
         }
 
-        // 更新加密数据到文本框
-        function updateEncryptedData() {
-            // 构建数据内容
-            let fileContent = '';
-            
-            // 添加 姓名 → 加密code
-            Object.keys(nameToEncryptedCode).forEach(name => {
-                fileContent += `${name}==${nameToEncryptedCode[name]}\n`;
-            });
-            
-            // 添加 加密code → 加密密码
-            Object.keys(encryptedCodeToEncryptedPassword).forEach(encryptedCode => {
-                fileContent += `${encryptedCode}==${encryptedCodeToEncryptedPassword[encryptedCode]}\n`;
-            });
-            
-            // 更新文本框显示
-            encryptedDataTextarea.value = fileContent;
-            
-            // 显示复制提示
-            copyNotice.style.display = 'block';
-            setTimeout(() => {
-                copyNotice.style.display = 'none';
-            }, 3000);
-            
-            showInfo('🔄 数据已更新，请复制上面的加密数据！');
-        }
-
         // 初始化
         encryptedDataTextarea.value = DEFAULT_ENCRYPTED_DATA;
         initializeDataFromTextarea();
+        setupAutoSave();
     </script>
 </body>
 </html>
