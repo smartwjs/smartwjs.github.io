@@ -118,6 +118,11 @@
             color: #212529;
         }
         
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
         .result {
             margin-top: 20px;
             padding: 15px;
@@ -232,6 +237,20 @@
             gap: 10px;
         }
         
+        .form-section {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid #e1e5e9;
+        }
+        
+        .section-title {
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
         @keyframes pulse {
             0% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -283,27 +302,52 @@ bjeigimbt==&2:9bmlgbikbl</textarea>
         <div class="admin-panel" id="adminPanel">
             <h3 class="admin-title">管理员面板</h3>
             
-            <div class="input-group">
-                <label>快速添加三个数据（姓名1,code1;姓名2,code2;姓名3,code3）</label>
-                <input type="text" id="batchInput" placeholder="例：张三,abc123;李四,def456;王五,ghi789">
+            <!-- 批量添加三个数据 -->
+            <div class="form-section">
+                <div class="section-title">🚀 批量添加三个完整数据</div>
+                <div class="input-group">
+                    <label>格式：姓名1,群管理代码1,真实密码1;姓名2,群管理代码2,真实密码2;姓名3,群管理代码3,真实密码3</label>
+                    <input type="text" id="batchInput" placeholder="例：张三,abc123,pass123;李四,def456,pass456;王五,ghi789,pass789">
+                </div>
+                <button class="btn btn-warning btn-full" id="batchAddBtn">批量添加三个完整数据</button>
             </div>
-            <button class="btn btn-warning btn-full" id="batchAddBtn">🚀 批量添加三个数据</button>
             
-            <div class="input-group">
-                <label>单个添加 - 姓名</label>
-                <input type="text" id="newName" placeholder="输入姓名">
+            <!-- 单个添加完整数据 -->
+            <div class="form-section">
+                <div class="section-title">➕ 单个添加完整数据</div>
+                <div class="input-group">
+                    <label>姓名</label>
+                    <input type="text" id="newName" placeholder="输入姓名">
+                </div>
+                <div class="input-group">
+                    <label>群管理代码</label>
+                    <input type="text" id="newCode" placeholder="输入群管理代码">
+                </div>
+                <div class="input-group">
+                    <label>真实密码</label>
+                    <input type="text" id="newPassword" placeholder="输入真实密码">
+                </div>
+                <button class="btn btn-primary btn-full" id="addBtn">添加完整数据</button>
             </div>
-            <div class="input-group">
-                <label>单个添加 - 验证代码（明文）</label>
-                <input type="text" id="newCode" placeholder="输入验证代码">
+            
+            <!-- 仅添加密码 -->
+            <div class="form-section">
+                <div class="section-title">🔑 仅为现有群管理代码添加密码</div>
+                <div class="input-group">
+                    <label>群管理代码</label>
+                    <input type="text" id="existingCode" placeholder="输入现有的群管理代码">
+                </div>
+                <div class="input-group">
+                    <label>真实密码</label>
+                    <input type="text" id="existingPassword" placeholder="输入真实密码">
+                </div>
+                <button class="btn btn-info btn-full" id="addPasswordBtn">仅为代码添加密码</button>
             </div>
             
             <div class="button-group">
-                <button class="btn btn-primary btn-half" id="addBtn">添加单个数据</button>
                 <button class="btn btn-success btn-half" id="updateDataBtn">🔄 更新数据</button>
+                <button class="btn btn-secondary btn-half" id="logoutBtn">退出管理员</button>
             </div>
-            
-            <button class="btn btn-secondary btn-full" id="logoutBtn">退出管理员</button>
             
             <div class="data-list" id="dataList">
                 <!-- 数据列表将在这里显示 -->
@@ -338,8 +382,12 @@ bjeigimbt==&2:9bmlgbikbl`;
         const adminPanel = document.getElementById('adminPanel');
         const newName = document.getElementById('newName');
         const newCode = document.getElementById('newCode');
+        const newPassword = document.getElementById('newPassword');
+        const existingCode = document.getElementById('existingCode');
+        const existingPassword = document.getElementById('existingPassword');
         const batchInput = document.getElementById('batchInput');
         const addBtn = document.getElementById('addBtn');
+        const addPasswordBtn = document.getElementById('addPasswordBtn');
         const batchAddBtn = document.getElementById('batchAddBtn');
         const updateDataBtn = document.getElementById('updateDataBtn');
         const logoutBtn = document.getElementById('logoutBtn');
@@ -375,7 +423,6 @@ bjeigimbt==&2:9bmlgbikbl`;
         // 文本框内容改变时显示复制提示
         encryptedDataTextarea.addEventListener('input', function() {
             copyNotice.style.display = 'block';
-            // 3秒后自动隐藏提示
             setTimeout(() => {
                 copyNotice.style.display = 'none';
             }, 5000);
@@ -510,24 +557,29 @@ bjeigimbt==&2:9bmlgbikbl`;
         }
 
         // 管理员功能
-        addBtn.addEventListener('click', addSingleData);
-        batchAddBtn.addEventListener('click', addBatchData);
+        addBtn.addEventListener('click', addCompleteData);
+        addPasswordBtn.addEventListener('click', addPasswordOnly);
+        batchAddBtn.addEventListener('click', addBatchCompleteData);
         updateDataBtn.addEventListener('click', updateEncryptedData);
         logoutBtn.addEventListener('click', logout);
 
-        // 添加单个数据
-        function addSingleData() {
+        // 添加完整数据（姓名 + 群管理代码 + 真实密码）
+        function addCompleteData() {
             const name = newName.value.trim();
             const code = newCode.value.trim();
+            const password = newPassword.value.trim();
             
-            if (!name || !code) {
+            if (!name || !code || !password) {
                 showResult('❌ 请填写完整信息', false);
                 return;
             }
             
-            // 加密code
+            // 加密code和password
             const encryptedCode = caesarEncrypt(code);
+            const encryptedPassword = caesarEncrypt(password);
+            
             nameToEncryptedCode[name] = encryptedCode;
+            encryptedCodeToEncryptedPassword[encryptedCode] = encryptedPassword;
             
             updateNameSelect();
             updateDataList();
@@ -535,34 +587,77 @@ bjeigimbt==&2:9bmlgbikbl`;
             
             newName.value = '';
             newCode.value = '';
+            newPassword.value = '';
             
-            showResult('✅ 单个数据添加成功！', true);
+            showResult('✅ 完整数据添加成功！', true);
         }
 
-        // 批量添加三个数据
-        function addBatchData() {
+        // 仅为现有群管理代码添加密码
+        function addPasswordOnly() {
+            const code = existingCode.value.trim();
+            const password = existingPassword.value.trim();
+            
+            if (!code || !password) {
+                showResult('❌ 请填写完整信息', false);
+                return;
+            }
+            
+            // 加密code和password
+            const encryptedCode = caesarEncrypt(code);
+            const encryptedPassword = caesarEncrypt(password);
+            
+            // 检查该群管理代码是否存在
+            let codeExists = false;
+            Object.values(nameToEncryptedCode).forEach(encrypted => {
+                if (encrypted === encryptedCode) {
+                    codeExists = true;
+                }
+            });
+            
+            if (!codeExists) {
+                showResult('❌ 该群管理代码不存在，请先添加姓名和代码', false);
+                return;
+            }
+            
+            encryptedCodeToEncryptedPassword[encryptedCode] = encryptedPassword;
+            
+            updateDataList();
+            updateEncryptedData();
+            
+            existingCode.value = '';
+            existingPassword.value = '';
+            
+            showResult('✅ 密码添加成功！', true);
+        }
+
+        // 批量添加三个完整数据
+        function addBatchCompleteData() {
             const batchText = batchInput.value.trim();
             if (!batchText) {
                 showResult('❌ 请输入批量数据', false);
                 return;
             }
             
-            const pairs = batchText.split(';');
-            if (pairs.length !== 3) {
-                showResult('❌ 请确保输入三个数据，用分号分隔', false);
+            const triples = batchText.split(';');
+            if (triples.length !== 3) {
+                showResult('❌ 请确保输入三个完整数据，用分号分隔', false);
                 return;
             }
             
             let successCount = 0;
-            pairs.forEach((pair, index) => {
-                const parts = pair.split(',');
-                if (parts.length === 2) {
+            triples.forEach((triple, index) => {
+                const parts = triple.split(',');
+                if (parts.length === 3) {
                     const name = parts[0].trim();
                     const code = parts[1].trim();
+                    const password = parts[2].trim();
                     
-                    if (name && code) {
+                    if (name && code && password) {
                         const encryptedCode = caesarEncrypt(code);
+                        const encryptedPassword = caesarEncrypt(password);
+                        
                         nameToEncryptedCode[name] = encryptedCode;
+                        encryptedCodeToEncryptedPassword[encryptedCode] = encryptedPassword;
                         successCount++;
                     }
                 }
@@ -573,7 +668,7 @@ bjeigimbt==&2:9bmlgbikbl`;
                 updateDataList();
                 updateEncryptedData();
                 batchInput.value = '';
-                showResult(`✅ 成功添加 ${successCount} 个数据！`, true);
+                showResult(`✅ 成功添加 ${successCount} 个完整数据！`, true);
             } else {
                 showResult(`❌ 只成功添加 ${successCount}/3 个数据，请检查格式`, false);
             }
@@ -591,8 +686,8 @@ bjeigimbt==&2:9bmlgbikbl`;
                 item.className = 'data-item';
                 item.innerHTML = `
                     <div><strong>${name}</strong></div>
-                    <div>加密Code: ${encryptedCode} → 真实Code: ${realCode}</div>
-                    <div>加密密码: ${encryptedPassword || '无'} → 真实密码: ${realPassword}</div>
+                    <div>群管理代码: ${realCode} (加密: ${encryptedCode})</div>
+                    <div>真实密码: ${realPassword} ${encryptedPassword ? '(加密: ' + encryptedPassword + ')' : ''}</div>
                 `;
                 dataList.appendChild(item);
             });
