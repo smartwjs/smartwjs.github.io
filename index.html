@@ -75,7 +75,6 @@
         }
         
         .btn {
-            width: 100%;
             padding: 15px;
             border: none;
             border-radius: 8px;
@@ -84,6 +83,14 @@
             cursor: pointer;
             transition: all 0.3s ease;
             margin-bottom: 10px;
+        }
+        
+        .btn-full {
+            width: 100%;
+        }
+        
+        .btn-half {
+            width: 48%;
         }
         
         .btn-primary {
@@ -106,6 +113,11 @@
             color: white;
         }
         
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
         .result {
             margin-top: 20px;
             padding: 15px;
@@ -125,6 +137,12 @@
             background: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+        
+        .info {
+            background: #cce7ff;
+            color: #004085;
+            border: 1px solid #b3d7ff;
         }
         
         .admin-panel {
@@ -174,6 +192,7 @@
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 25px;
+            position: relative;
         }
         
         .data-title {
@@ -193,6 +212,31 @@
             cursor: pointer;
             font-size: 12px;
         }
+        
+        .copy-notice {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            animation: pulse 2s infinite;
+            display: none;
+        }
+        
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     </style>
 </head>
 <body>
@@ -201,11 +245,12 @@
         <div class="subtitle">使用凯撒密码（右移1位）加密验证代码</div>
         
         <div class="data-section">
+            <div class="copy-notice" id="copyNotice">请复制</div>
             <div class="data-title">
                 <span>📁 加密数据（名字==加密的code）</span>
                 <button class="copy-btn" onclick="copyEncryptedData()">复制数据</button>
             </div>
-            <textarea id="encryptedData" readonly>王欣正==bimjgvte
+            <textarea id="encryptedData">王欣正==bimjgvte
 王睿佳==rp9zsjgme
 徐金慧==bijopegjv
 张俊彦==bjeigimbt
@@ -214,7 +259,7 @@ rp9zsjgme==&21mvrkex
 bijopegjv==&2296kmbt
 bjeigimbt==&2:9bmlgbikbl</textarea>
             <div style="font-size: 12px; color: #666; margin-top: 8px;">
-                格式：名字==（凯撒加密的code），右移1位ASCII
+                格式：名字==（凯撒加密的code），右移1位ASCII | <strong>可编辑</strong>
             </div>
         </div>
         
@@ -230,24 +275,35 @@ bjeigimbt==&2:9bmlgbikbl</textarea>
             <input type="text" id="codeInput" placeholder="请输入验证代码">
         </div>
         
-        <button class="btn btn-primary" id="verifyBtn">✅ 验证</button>
-        <button class="btn btn-secondary" id="adminBtn">⚙️ 管理员登录</button>
+        <button class="btn btn-primary btn-full" id="verifyBtn">✅ 验证</button>
+        <button class="btn btn-secondary btn-full" id="adminBtn">⚙️ 管理员登录</button>
         
         <div id="result" class="result"></div>
         
         <div class="admin-panel" id="adminPanel">
             <h3 class="admin-title">管理员面板</h3>
+            
             <div class="input-group">
-                <label>姓名</label>
+                <label>快速添加三个数据（姓名1,code1;姓名2,code2;姓名3,code3）</label>
+                <input type="text" id="batchInput" placeholder="例：张三,abc123;李四,def456;王五,ghi789">
+            </div>
+            <button class="btn btn-warning btn-full" id="batchAddBtn">🚀 批量添加三个数据</button>
+            
+            <div class="input-group">
+                <label>单个添加 - 姓名</label>
                 <input type="text" id="newName" placeholder="输入姓名">
             </div>
             <div class="input-group">
-                <label>验证代码（明文）</label>
+                <label>单个添加 - 验证代码（明文）</label>
                 <input type="text" id="newCode" placeholder="输入验证代码">
             </div>
-            <button class="btn btn-primary" id="addBtn">添加数据</button>
-            <button class="btn btn-success" id="updateDataBtn">🔄 更新加密数据</button>
-            <button class="btn btn-secondary" id="logoutBtn">退出管理员</button>
+            
+            <div class="button-group">
+                <button class="btn btn-primary btn-half" id="addBtn">添加单个数据</button>
+                <button class="btn btn-success btn-half" id="updateDataBtn">🔄 更新数据</button>
+            </div>
+            
+            <button class="btn btn-secondary btn-full" id="logoutBtn">退出管理员</button>
             
             <div class="data-list" id="dataList">
                 <!-- 数据列表将在这里显示 -->
@@ -257,7 +313,7 @@ bjeigimbt==&2:9bmlgbikbl</textarea>
 
     <script>
         // 内置的加密数据（凯撒密码右移1位）
-        const ENCRYPTED_DATA = `王欣正==bimjgvte
+        const DEFAULT_ENCRYPTED_DATA = `王欣正==bimjgvte
 王睿佳==rp9zsjgme
 徐金慧==bijopegjv
 张俊彦==bjeigimbt
@@ -273,6 +329,7 @@ bjeigimbt==&2:9bmlgbikbl`;
 
         // 获取DOM元素
         const encryptedDataTextarea = document.getElementById('encryptedData');
+        const copyNotice = document.getElementById('copyNotice');
         const nameSelect = document.getElementById('nameSelect');
         const codeInput = document.getElementById('codeInput');
         const verifyBtn = document.getElementById('verifyBtn');
@@ -281,7 +338,9 @@ bjeigimbt==&2:9bmlgbikbl`;
         const adminPanel = document.getElementById('adminPanel');
         const newName = document.getElementById('newName');
         const newCode = document.getElementById('newCode');
+        const batchInput = document.getElementById('batchInput');
         const addBtn = document.getElementById('addBtn');
+        const batchAddBtn = document.getElementById('batchAddBtn');
         const updateDataBtn = document.getElementById('updateDataBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const dataList = document.getElementById('dataList');
@@ -312,6 +371,15 @@ bjeigimbt==&2:9bmlgbikbl`;
             document.execCommand('copy');
             showResult('✅ 加密数据已复制到剪贴板', true);
         }
+
+        // 文本框内容改变时显示复制提示
+        encryptedDataTextarea.addEventListener('input', function() {
+            copyNotice.style.display = 'block';
+            // 3秒后自动隐藏提示
+            setTimeout(() => {
+                copyNotice.style.display = 'none';
+            }, 5000);
+        });
 
         // 解析数据内容
         function parseDataContent(content) {
@@ -350,15 +418,16 @@ bjeigimbt==&2:9bmlgbikbl`;
             });
         }
 
-        // 初始化数据
-        function initializeData() {
+        // 从文本框初始化数据
+        function initializeDataFromTextarea() {
             try {
-                parseDataContent(ENCRYPTED_DATA);
+                const content = encryptedDataTextarea.value;
+                parseDataContent(content);
                 updateNameSelect();
-                console.log('✅ 凯撒加密数据加载成功');
+                console.log('✅ 数据加载成功');
             } catch (error) {
                 console.error('❌ 数据初始化失败:', error);
-                showResult('❌ 数据加载失败', false);
+                showResult('❌ 数据格式错误，请检查', false);
             }
         }
 
@@ -429,12 +498,25 @@ bjeigimbt==&2:9bmlgbikbl`;
             }, 3000);
         }
 
+        // 显示信息提示
+        function showInfo(message) {
+            resultDiv.textContent = message;
+            resultDiv.className = 'result info';
+            resultDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                resultDiv.style.display = 'none';
+            }, 3000);
+        }
+
         // 管理员功能
-        addBtn.addEventListener('click', addData);
+        addBtn.addEventListener('click', addSingleData);
+        batchAddBtn.addEventListener('click', addBatchData);
         updateDataBtn.addEventListener('click', updateEncryptedData);
         logoutBtn.addEventListener('click', logout);
 
-        function addData() {
+        // 添加单个数据
+        function addSingleData() {
             const name = newName.value.trim();
             const code = newCode.value.trim();
             
@@ -449,11 +531,52 @@ bjeigimbt==&2:9bmlgbikbl`;
             
             updateNameSelect();
             updateDataList();
+            updateEncryptedData();
             
             newName.value = '';
             newCode.value = '';
             
-            showResult('✅ 数据添加成功！', true);
+            showResult('✅ 单个数据添加成功！', true);
+        }
+
+        // 批量添加三个数据
+        function addBatchData() {
+            const batchText = batchInput.value.trim();
+            if (!batchText) {
+                showResult('❌ 请输入批量数据', false);
+                return;
+            }
+            
+            const pairs = batchText.split(';');
+            if (pairs.length !== 3) {
+                showResult('❌ 请确保输入三个数据，用分号分隔', false);
+                return;
+            }
+            
+            let successCount = 0;
+            pairs.forEach((pair, index) => {
+                const parts = pair.split(',');
+                if (parts.length === 2) {
+                    const name = parts[0].trim();
+                    const code = parts[1].trim();
+                    
+                    if (name && code) {
+                        const encryptedCode = caesarEncrypt(code);
+                        nameToEncryptedCode[name] = encryptedCode;
+                        successCount++;
+                    }
+                }
+            });
+            
+            if (successCount === 3) {
+                updateNameSelect();
+                updateDataList();
+                updateEncryptedData();
+                batchInput.value = '';
+                showResult(`✅ 成功添加 ${successCount} 个数据！`, true);
+            } else {
+                showResult(`❌ 只成功添加 ${successCount}/3 个数据，请检查格式`, false);
+            }
         }
 
         function updateDataList() {
@@ -480,7 +603,7 @@ bjeigimbt==&2:9bmlgbikbl`;
             showResult('已退出管理员模式', true);
         }
 
-        // 更新加密数据
+        // 更新加密数据到文本框
         function updateEncryptedData() {
             // 构建数据内容
             let fileContent = '';
@@ -498,11 +621,18 @@ bjeigimbt==&2:9bmlgbikbl`;
             // 更新文本框显示
             encryptedDataTextarea.value = fileContent;
             
-            showResult('✅ 加密数据已更新！', true);
+            // 显示复制提示
+            copyNotice.style.display = 'block';
+            setTimeout(() => {
+                copyNotice.style.display = 'none';
+            }, 3000);
+            
+            showInfo('🔄 数据已更新，请复制上面的加密数据！');
         }
 
         // 初始化
-        initializeData();
+        encryptedDataTextarea.value = DEFAULT_ENCRYPTED_DATA;
+        initializeDataFromTextarea();
     </script>
 </body>
 </html>
