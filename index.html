@@ -41,6 +41,28 @@
             font-size: 14px;
         }
         
+        .music-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            border-radius: 10px;
+            color: white;
+        }
+        
+        .music-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .music-player {
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        
         .input-group {
             margin-bottom: 20px;
         }
@@ -269,6 +291,14 @@
     <div class="container">
         <h1>🔐 验证系统 <span class="encryption-badge">实时编辑</span></h1>
         <div class="subtitle">直接在数据框中编辑，实时生效</div>
+        
+        <!-- 音乐播放器 -->
+        <div class="music-section">
+            <div class="music-title">🎵 好阴乐 🎵</div>
+            <div class="music-player">
+                <iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width=330 height=86 src="//music.163.com/outchain/player?type=3&id=2508245244&auto=1&height=66"></iframe>
+            </div>
+        </div>
         
         <div class="data-section">
             <div class="auto-save-notice" id="autoSaveNotice">已更新</div>
