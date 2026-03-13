@@ -1,0 +1,146 @@
+/* 全局样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Microsoft YaHei", sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f5f5f5;
+  color: #333;
+  line-height: 1.8;
+}
+
+/* 导航栏 */
+nav {
+  background: #2c3e50;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin-right: 20px;
+  font-size: 16px;
+}
+
+nav a:hover {
+  color: #3498db;
+}
+
+/* 博客列表 */
+.blog-list {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.blog-list h1 {
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.blog-item {
+  padding: 15px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.blog-item:last-child {
+  border-bottom: none;
+}
+
+.blog-item a {
+  font-size: 18px;
+  color: #3498db;
+  text-decoration: none;
+}
+
+.blog-item a:hover {
+  text-decoration: underline;
+}
+
+.blog-item .meta {
+  font-size: 14px;
+  color: #777;
+  margin-top: 5px;
+}
+
+/* MD 博客渲染样式 */
+.blog-detail {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.blog-detail h1 {
+  color: #2c3e50;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 10px;
+}
+
+.blog-content {
+  margin-top: 20px;
+}
+
+/* MD 内容样式适配 */
+.blog-content h2 {
+  color: #34495e;
+  margin: 20px 0 10px;
+}
+
+.blog-content h3 {
+  color: #4a6584;
+  margin: 15px 0 8px;
+}
+
+.blog-content p {
+  margin: 10px 0;
+}
+
+.blog-content ul, .blog-content ol {
+  margin: 10px 0 10px 20px;
+}
+
+.blog-content code {
+  background: #f8f8f8;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #e74c3c;
+}
+
+.blog-content pre {
+  background: #f8f8f8;
+  padding: 15px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.blog-content pre code {
+  color: #333;
+  padding: 0;
+}
+
+.blog-content blockquote {
+  border-left: 4px solid #3498db;
+  padding: 10px 15px;
+  background: #f0f8ff;
+  margin: 10px 0;
+}
+
+/* 页脚 */
+footer {
+  text-align: center;
+  margin-top: 40px;
+  color: #777;
+  font-size: 14px;
+}
