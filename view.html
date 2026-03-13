@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>smartwjs 的博客 - 加载中...</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- 替换为更稳定的 marked CDN，增加加载失败兜底 -->
+  <script src="https://cdn.bootcdn.net/ajax/libs/marked/12.0.2/marked.min.js"></script>
 </head>
 <body>
   <nav>
@@ -23,39 +24,47 @@
   </footer>
 
   <script>
-    function getUrlParam(name) {
-      const reg = new RegExp(`(^|&)${name}=([^&]*)(&|$)`);
-      const r = window.location.search.substr(1).match(reg);
-      return r ? decodeURIComponent(r[2]) : '';
-    }
-
-    async function loadMarkdown() {
-      const fileName = getUrlParam('file');
-      if (!fileName) {
-        document.getElementById('blog-title').textContent = '文件不存在';
-        document.getElementById('blog-content').textContent = '请选择正确的博客文章';
-        return;
+    // 增加 marked 存在性检查，防止未定义
+    if (typeof marked === 'undefined') {
+      document.getElementById('blog-title').textContent = '加载失败';
+      document.getElementById('blog-content').textContent = '错误：Markdown 解析库加载失败，请刷新页面重试！';
+    } else {
+      function getUrlParam(name) {
+        const reg = new RegExp(`(^|&)${name}=([^&]*)(&|$)`);
+        const r = window.location.search.substr(1).match(reg);
+        return r ? decodeURIComponent(r[2]) : '';
       }
 
-      try {
-        // 加载 blogs 文件夹中的 MD 文件
-        const response = await fetch(`blogs/${fileName}`);
-        if (!response.ok) throw new Error('文件加载失败');
-        
-        const mdText = await response.text();
-        const titleMatch = mdText.match(/^# (.*)$/m);
-        const blogTitle = titleMatch ? titleMatch[1] : fileName.replace('.md', '');
-        
-        document.title = `${blogTitle} - smartwjs 的博客`;
-        document.getElementById('blog-title').textContent = blogTitle;
-        document.getElementById('blog-content').innerHTML = marked.parse(mdText);
-      } catch (error) {
-        document.getElementById('blog-title').textContent = '加载失败';
-        document.getElementById('blog-content').textContent = `错误：${error.message}`;
-      }
-    }
+      async function loadMarkdown() {
+        const fileName = getUrlParam('file');
+        if (!fileName) {
+          document.getElementById('blog-title').textContent = '文件不存在';
+          document.getElementById('blog-content').textContent = '请选择正确的博客文章';
+          return;
+        }
 
-    window.onload = loadMarkdown;
+        try {
+          // 加载 blogs 文件夹中的 MD 文件
+          const response = await fetch(`blogs/${fileName}`);
+          if (!response.ok) throw new Error('文件加载失败');
+          
+          const mdText = await response.text();
+          const titleMatch = mdText.match(/^# (.*)$/m);
+          const blogTitle = titleMatch ? titleMatch[1] : fileName.replace('.md', '');
+          
+          document.title = `${blogTitle} - smartwjs 的博客`;
+          document.getElementById('blog-title').textContent = blogTitle;
+          // 用 marked 解析 MD 内容
+          document.getElementById('blog-content').innerHTML = marked.parse(mdText);
+        } catch (error) {
+          document.getElementById('blog-title').textContent = '加载失败';
+          document.getElementById('blog-content').textContent = `错误：${error.message}`;
+        }
+      }
+
+      // 页面加载完成后执行
+      window.addEventListener('load', loadMarkdown);
+    }
   </script>
 </body>
 </html>
