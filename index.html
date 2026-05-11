@@ -5,6 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>smartwjs 的博客</title>
   <link rel="stylesheet" href="style.css">
+  <!-- reCAPTCHA v3 脚本 - 已配置您的密钥 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6LdzpeQsAAAAAMcIjpKquDIvChNJdxOdMl-vbbQK"></script>
+  <style>
+    .verify-section {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .verify-status {
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .verified {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .unverified {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .verify-btn {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .verify-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    .hidden-content {
+      display: none;
+    }
+    .verified-content {
+      display: block;
+    }
+    .blog-list {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .blog-item {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .blog-item a {
+      font-size: 18px;
+      color: #0366d6;
+      text-decoration: none;
+    }
+    .blog-item a:hover {
+      text-decoration: underline;
+    }
+    .meta {
+      font-size: 12px;
+      color: #666;
+      margin-top: 5px;
+    }
+    nav {
+      background: #24292e;
+      padding: 10px;
+      text-align: center;
+    }
+    nav a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      margin-top: 40px;
+    }
+    h1 {
+      text-align: center;
+      color: #24292e;
+    }
+  </style>
 </head>
 <body>
   <nav>
@@ -12,17 +100,26 @@
     <a href="#about">关于我</a>
   </nav>
 
-  <div class="blog-list">
-    <h1>smartwjs 的博客</h1>
-    <!-- 自动生成的博客列表会插入到这里 -->
-    <div id="auto-blog-list"></div>
-    <!-- 加载提示 -->
-    <div id="loading" style="text-align: center; color: #777; padding: 20px;">
-      正在加载博客列表...
+  <!-- 验证区域 -->
+  <div class="verify-section" id="verifySection">
+    <div id="verifyStatus" class="verify-status unverified">
+      🤖 请点击下方按钮完成人机验证
     </div>
-    <!-- 加载失败提示 -->
-    <div id="error" style="text-align: center; color: #e74c3c; padding: 20px; display: none;">
-      博客列表加载失败，请稍后重试
+    <button class="verify-btn" id="verifyBtn">👉 点击验证 (reCAPTCHA) 👈</button>
+    <div id="tokenInfo" style="font-size: 12px; color: #666; margin-top: 10px;"></div>
+  </div>
+
+  <!-- 博客内容（验证后才显示） -->
+  <div id="protectedContent" class="hidden-content">
+    <div class="blog-list">
+      <h1>📝 smartwjs 的博客</h1>
+      <div id="auto-blog-list"></div>
+      <div id="loading" style="text-align: center; color: #777; padding: 20px;">
+        ⏳ 正在加载博客列表...
+      </div>
+      <div id="error" style="text-align: center; color: #e74c3c; padding: 20px; display: none;">
+        ❌ 博客列表加载失败，请刷新重试
+      </div>
     </div>
   </div>
 
@@ -31,51 +128,91 @@
   </footer>
 
   <script>
-    // 已适配你的 GitHub 信息，无需修改
+    // ============ 配置 ============
     const CONFIG = {
       username: "smartwjs", 
       repo: "smartwjs.github.io", 
       branch: "main", 
-      folder: "blogs" 
+      folder: "blogs",
+      siteKey: "6LdzpeQsAAAAAMcIjpKquDIvChNJdxOdMl-vbbQK"  // 您的Site Key已填好
     };
 
-    // 解析文件名：从 "2026-03-13-标题.md" 提取日期和标题
+    let isVerified = false;
+
+    // ============ 验证函数 ============
+    async function doVerification() {
+      const verifyBtn = document.getElementById('verifyBtn');
+      const verifyStatus = document.getElementById('verifyStatus');
+      const tokenInfo = document.getElementById('tokenInfo');
+      
+      try {
+        verifyBtn.disabled = true;
+        verifyBtn.textContent = '⏳ 验证中...';
+        
+        // 执行 reCAPTCHA
+        const token = await grecaptcha.execute(CONFIG.siteKey, {
+          action: 'view_blog'
+        });
+        
+        tokenInfo.innerHTML = `✅ 验证通过！令牌已生成`;
+        
+        // 保存验证状态（1小时内有效）
+        localStorage.setItem('blog_verified', 'true');
+        localStorage.setItem('blog_verified_time', Date.now().toString());
+        
+        // 更新UI
+        verifyStatus.className = 'verify-status verified';
+        verifyStatus.innerHTML = '✅ 验证成功！正在加载博客内容...';
+        verifyBtn.style.display = 'none';
+        
+        // 显示博客内容
+        document.getElementById('protectedContent').className = 'verified-content';
+        
+        // 加载博客列表
+        await loadBlogList();
+        
+      } catch (error) {
+        console.error('验证失败:', error);
+        verifyStatus.className = 'verify-status unverified';
+        verifyStatus.innerHTML = '❌ 验证失败，请重试';
+        tokenInfo.innerHTML = '验证失败，请点击重试';
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = '重新验证 (reCAPTCHA)';
+      }
+    }
+
+    // ============ 解析文件名 ============
     function parseFileName(fileName) {
-      // 去掉 .md 后缀
       const nameWithoutExt = fileName.replace(/\.md$/, "");
-      // 匹配 YYYY-MM-DD-标题 格式
       const regex = /^(\d{4}-\d{2}-\d{2})-(.*)$/;
       const match = nameWithoutExt.match(regex);
       if (match) {
         return {
           date: match[1],
-          title: match[2].replace(/-/g, " ") // 把连字符换成空格，更美观
+          title: match[2].replace(/-/g, " ")
         };
       }
-      // 非标准命名的 fallback
       return {
         date: "未知日期",
         title: nameWithoutExt
       };
     }
 
-    // 自动加载 blogs 文件夹的所有 MD 文件并生成列表
+    // ============ 加载博客列表 ============
     async function loadBlogList() {
       const listContainer = document.getElementById("auto-blog-list");
       const loading = document.getElementById("loading");
       const error = document.getElementById("error");
 
       try {
-        // 调用 GitHub API 获取 blogs 文件夹的文件列表
         const apiUrl = `https://api.github.com/repos/${CONFIG.username}/${CONFIG.repo}/contents/${CONFIG.folder}?ref=${CONFIG.branch}`;
         const response = await fetch(apiUrl);
         
         if (!response.ok) {
-          throw new Error(`API 请求失败：${response.status}`);
+          throw new Error(`API请求失败：${response.status}`);
         }
 
         const files = await response.json();
-        // 过滤出 .md 文件，并按日期倒序排序（最新的在前）
         const mdFiles = files
           .filter(file => file.name.endsWith(".md"))
           .sort((a, b) => {
@@ -84,18 +221,16 @@
             return bDate.localeCompare(aDate);
           });
 
-        // 清空加载提示，生成博客列表
         loading.style.display = "none";
         if (mdFiles.length === 0) {
           listContainer.innerHTML = "<p style='color: #777;'>暂无博客文章，快来发布第一篇吧！</p>";
           return;
         }
 
-        // 遍历 MD 文件，生成列表项
         let listHtml = "";
         mdFiles.forEach(file => {
           const { date, title } = parseFileName(file.name);
-          const fileUrl = `view.html?file=${encodeURIComponent(file.name)}`; // 转义特殊字符
+          const fileUrl = `view.html?file=${encodeURIComponent(file.name)}`;
           listHtml += `
             <div class="blog-item">
               <a href="${fileUrl}">${title}</a>
@@ -106,15 +241,46 @@
         listContainer.innerHTML = listHtml;
 
       } catch (err) {
-        // 加载失败处理
         loading.style.display = "none";
         error.style.display = "block";
         console.error("加载博客列表失败：", err);
       }
     }
 
-    // 页面加载时执行
-    window.onload = loadBlogList;
+    // ============ 检查保存的验证状态 ============
+    function checkSavedVerification() {
+      const savedVerified = localStorage.getItem('blog_verified');
+      const savedTime = localStorage.getItem('blog_verified_time');
+      
+      if (savedVerified === 'true' && savedTime) {
+        const timeDiff = Date.now() - parseInt(savedTime);
+        const oneHour = 60 * 60 * 1000;
+        
+        if (timeDiff < oneHour) {
+          // 一小时内有效，自动通过验证
+          isVerified = true;
+          document.getElementById('verifySection').style.display = 'none';
+          document.getElementById('protectedContent').className = 'verified-content';
+          loadBlogList();
+          return true;
+        } else {
+          // 清除过期验证
+          localStorage.removeItem('blog_verified');
+          localStorage.removeItem('blog_verified_time');
+        }
+      }
+      return false;
+    }
+
+    // ============ 页面初始化 ============
+    window.onload = () => {
+      if (!checkSavedVerification()) {
+        const verifyBtn = document.getElementById('verifyBtn');
+        if (verifyBtn) {
+          verifyBtn.addEventListener('click', doVerification);
+        }
+      }
+    };
   </script>
 </body>
 </html>
